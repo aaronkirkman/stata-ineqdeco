@@ -11,7 +11,7 @@ program ineqdeco, sortpreserve rclass
 
 version 8.2 
 syntax varname(numeric) [aweight fweight] [if] [in] ///
-	[, BYgroup(varname numeric) Welfare Summarize ]
+	[, BYgroup(varname numeric) Welfare Summarize QUIET]
 
 if "`summarize'" != "" local summ "summ" 
 if "`welfare'" != ""    local w "w" 
@@ -131,25 +131,27 @@ quietly {
 	lab var `v7525' "p75/p25"
 
 
-	noi { 
+	if "`quiet'" == "" {
 		di " "
-		di as txt "Percentile ratios" 
+		di as txt "Percentile ratios"
 		tabdisp `touse' in 1, c(`v9010' `v9050' `v1050' `v7525') f(%9.3f)
+	}
+	
+	global S_9010 = `p90'/`p10'
+	global S_7525 = `p75'/`p25'
+	return scalar p90p10 = `p90'/`p10' 
+	return scalar p75p25 = `p75'/`p25' 
+	return scalar p90p50 = `p90'/`p50'
+	return scalar p10p50 = `p10'/`p50'
+	return scalar p25p50 = `p25'/`p50' 
+	return scalar p75p50 = `p75'/`p50' 
 
-		global S_9010 = `p90'/`p10'
-		global S_7525 = `p75'/`p25'
-		return scalar p90p10 = `p90'/`p10' 
-		return scalar p75p25 = `p75'/`p25' 
-		return scalar p90p50 = `p90'/`p50'
- 		return scalar p10p50 = `p10'/`p50'
-		return scalar p25p50 = `p25'/`p50' 
-		return scalar p75p50 = `p75'/`p50' 
-
+	if "`quiet'" == "" {
 		di "  "
 		di as txt "Generalized Entropy indices GE(a), where a = income difference" 
 		di as txt " sensitivity parameter, and Gini coefficient"
 		tabdisp `touse' in 1, c(`im1' `i0' `i1' `i2' `gini') f(%9.5f)
-	}	
+	}
 
 	// saved results compatible with previous versions of -ineqdeco-
 	global S_gini = `gini'[1]
@@ -179,13 +181,14 @@ quietly {
 	lab var `ahalf' "A(0.5)"
 	lab var `a1' "A(1)"
 	lab var `a2' "A(2)"
-	
-	noi { 
+
+
+	if "`quiet'" == "" {
 		di "   "
 		di as txt "Atkinson indices, A(e), where e > 0 is " _c
 		di as txt "the inequality aversion parameter"
 		tabdisp `touse' if `touse', c(`ahalf' `a1' `a2') f(%9.5f)
-	}	
+	}
 
 	global S_ahalf = `ahalf'[1]
 	global S_a1 = `a1'[1]
@@ -205,7 +208,7 @@ quietly {
 		lab var `ede1' "Yede(1)"
 		lab var `ede2' "Yede(2)"
 
-		noi { 
+		if "`quiet'" == "" { 
 			di "   "
 			di as txt "Equally-distributed-equivalent incomes, Yede(e)"
 			tabdisp `touse' in 1, c(`edehalf' `ede1' `ede2') f(%15.5f)
@@ -227,7 +230,7 @@ quietly {
 		lab var `w2' "W(2)"
 		lab var `wgini' "mean*(1-Gini)"
 
-		noi { 
+		if "`quiet'" == "" {
 			di as txt "Social welfare indices, W(e), and Sen's welfare index"
 			tabdisp `touse' in 1, c(`whalf' `w1' `w2' `wgini') f(%15.5f)
 		}	
@@ -272,13 +275,13 @@ if "`bygroup'" != "" {
 
 	}
 
-	noi { 
+	if "`quiet'" == "" { 
 		di "  "
 		di as txt "Subgroup summary statistics, for each subgroup k = 1,...,K:"
-		if "`summ'" != "" {
-			bys `bygroup': sum `inc' [w = `wi'] if `touse', de
-		}
-	}	
+	}
+	if "`summ'" != "" {
+		bys `bygroup': sum `inc' [w = `wi'] if `touse', de
+	}
 
 	bysort `notuse' `bygroup' (`inc'): gen double `pyk' = (2 * sum(`wi') - `wi' + 1) / (2 * `nk' ) ///
 		if `touse'
@@ -300,7 +303,7 @@ if "`bygroup'" != "" {
 	lab var `i2k' "GE(2)"
 	lab var `wginik' "mean*(1-Gini)"
 
-	noi { 
+	if "`quiet'" == "" {
 		di "  "
 		tabdisp `bygroup' if `first' , c(`vk' `meanyk' `lambdak' `thetak' `lgmeank') f(%15.5f)
 
@@ -345,7 +348,7 @@ if "`bygroup'" != "" {
 	lab var `with1' "GE(1)"
 	lab var `with2' "GE(2)"
 
-	noi { 
+	if "`quiet'" == "" {
 		di "  "
 		di as txt "Within-group inequality, GE_W(a)"
 		tabdisp `touse' in 1 if `touse', c(`withm1' `with0' `with1' `with2')  f(%9.5f)
@@ -370,7 +373,7 @@ if "`bygroup'" != "" {
 	lab var `i1b' "GE(1)"
 	lab var `i2b' "GE(2)"
 
-	noi { 
+	if "`quiet'" == "" { 
 		di "              "
 		di as txt "Between-group inequality, GE_B(a):"
 		tabdisp `touse' in 1 if `touse' , c(`im1b' `i0b' `i1b' `i2b')  f(%9.5f)
@@ -401,7 +404,7 @@ if "`bygroup'" != "" {
 	lab var `a1k' "A(1)"
 	lab var `a2k' "A(2)"
 
-	noi { 
+	if "`quiet'" == "" { 
 		di "              "
 		di as txt "Subgroup Atkinson indices, A_k(e)"
 		tabdisp `bygroup' if `first' , c(`ahalfk' `a1k' `a2k')  f(%9.5f)
@@ -415,7 +418,7 @@ if "`bygroup'" != "" {
 	lab var `awith1' "A(1)"
 	lab var `awith2' "A(2)"
 
-	noi {
+	if "`quiet'" == "" {
 		di "  "
 		di as txt "Within-group inequality, A_W(e)"
 		tabdisp `touse' if `touse' , c(`awithh' `awith1' `awith2')  f(%9.5f)
@@ -448,7 +451,7 @@ if "`bygroup'" != "" {
 	lab var `a1b' "A(1)"
 	lab var `a2b' "A(2)"
 
-	noi { 
+	if "`quiet'" == "" {
 		di " "
 		di as txt "Between-group inequality, A_B(e)"
 		tabdisp `touse' in 1 if `touse'	, c(`ahalfb' `a1b' `a2b') f(%9.5f)
@@ -470,7 +473,7 @@ if "`bygroup'" != "" {
 		lab var `ede1k' "Yede(1)"
 		lab var `ede2k' "Yede(2)"
 
-		noi { 
+		if "`quiet'" == "" { 
 			di "              "
 			di as txt "Subgroup equally-distributed-equivalent income, Yede_k(e)"
 			tabdisp `bygroup' if `first', c(`edehalfk' `ede1k' `ede2k')  f(%15.5f)
@@ -497,7 +500,7 @@ if "`bygroup'" != "" {
 		lab var `w1k' "W(1)"
 		lab var `w2k' "W(2)"
 
-		noi { 
+		if "`quiet'" == "" { 
 			di "              "
 			di as txt "Subgroup welfare indices: W_k(e) and Sen's index"
 			tabdisp `bygroup' if `first', c(`whalfk' `w1k' `w2k' `wginik')  f(%15.5f)
